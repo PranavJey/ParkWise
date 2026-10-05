@@ -1,119 +1,152 @@
-# ParkWise AI
+ï»¿# ParkWise AI
 
 > **"Find parking. Park smarter."**
 
-ParkWise is an open-source, AI-powered parking discovery Progressive Web Application (PWA) designed to simplify urban mobility. ParkWise helps drivers discover real nearby parking spaces via OpenStreetMap, check estimated availability, and navigate effortlessly to selected parking destinations.
+ParkWise is an open-source, AI-powered parking discovery Progressive Web Application (PWA) that helps drivers find real nearby parking via OpenStreetMap and receive intelligent natural-language recommendations.
 
 ---
 
-## ?? Project Status: Phase 4 — Real Parking Locations (OSM + Overpass)
+## Project Status
 
 | Phase | Feature | Status |
 |-------|---------|--------|
-| Phase 1 | Responsive PWA Foundation + UI System | ? Complete |
-| Phase 2 | Real Map (Leaflet + OSM) + Live Geolocation | ? Complete |
-| Phase 3 | Parking Data Layer & Provider Architecture | ? Complete |
-| **Phase 4** | **Real Parking Locations (Overpass API)** | ? Complete |
-| Phase 5 | AI Recommendation Engine | ?? Planned |
+| Phase 1 | Responsive PWA Foundation + UI System | Complete |
+| Phase 2 | Real Map (Leaflet + OSM) + Live Geolocation | Complete |
+| Phase 3 | Parking Data Layer & Provider Architecture | Complete |
+| Phase 4 | Real Parking Locations (Overpass API) | Complete |
+| **Phase 5** | **AI Recommendation Engine** | **Complete** |
+| Phase 6 | Navigation & Polish | Planned |
 
 ---
 
-## ??? Data Sources & Attribution
+## AI Recommendation Engine (Phase 5)
+
+ParkWise uses an **open-weight language model** to understand natural-language parking preferences and generate short recommendation explanations.
+
+### Model
+
+| Property | Value |
+|----------|-------|
+| **Model** | Meta Llama 3.1 8B Instant (`llama-3.1-8b-instant`) |
+| **Provider** | [Groq](https://groq.com) (hosted inference) |
+| **License** | [Meta Llama 3.1 Community License](https://llama.meta.com/llama3_1/license/) |
+| **Used for** | Preference extraction from natural language + recommendation explanation |
+
+> **Important:** Llama 3.1 is an open-weight model. The weights are publicly available but subject to Meta's Community License, not an OSI open-source license. Groq provides hosted inference â€” no weights are downloaded or run locally.
+
+### How it works
+
+```
+User natural-language request
+           â†“
+   Llama 3.1 (via Groq)
+           â†“
+  Structured preferences (JSON)
+           â†“
+   Deterministic ranking engine
+  (operates on real parking data)
+           â†“
+     Best matching spot
+           â†“
+   Llama 3.1 (via Groq)
+           â†“
+  Short natural-language explanation
+           â†“
+       Shown to user
+```
+
+**The AI does not invent parking locations.**
+All candidate parking data comes from OpenStreetMap or the demo provider.
+The model only extracts preferences and generates an explanation.
+Parking selection is performed by deterministic application code.
+
+### Graceful degradation
+
+- If `VITE_GROQ_API_KEY` is not set â†’ falls back to local regex parser (no network call)
+- If Groq API fails â†’ falls back to local regex parser + template explanation
+- If Overpass API fails â†’ demo parking is used, AI recommendation still works
+
+---
+
+## Data Sources & Attribution
 
 ### OpenStreetMap / Overpass API
 
-Real parking location data is retrieved from the [OpenStreetMap](https://www.openstreetmap.org/) database via the public [Overpass API](https://overpass-api.de/).
+Real parking location data is retrieved from [OpenStreetMap](https://www.openstreetmap.org/) via the public [Overpass API](https://overpass-api.de/).
 
-> © OpenStreetMap contributors, licensed under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/).
+> Â© OpenStreetMap contributors, licensed under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/).
 
-Map tiles are provided by OpenStreetMap and rendered via [Leaflet](https://leafletjs.com/).
+Map tiles rendered via [Leaflet](https://leafletjs.com/).
 
-#### Provider Hierarchy
-
-```
-OpenStreetMapParkingProvider (primary)
-  +-- On success (>0 results) ? real OSM parking locations displayed
-  +-- On failure / timeout / empty ? DemoParkingProvider (fallback)
-```
-
----
-
-## ?? Data Disclaimer
+### Data Disclaimer
 
 > **Availability is estimated, not live.**
 
-ParkWise does **not** have access to real-time parking sensors, occupancy feeds, or bay-level IoT data.
-
-- **Location data** (name, latitude, longitude, parking type) is sourced from OpenStreetMap.
+- **Location data** (name, coordinates, parking type) is sourced from OpenStreetMap.
 - **Availability percentages, capacity, and pricing** are **deterministic estimates** generated from OSM metadata. They do **not** reflect real-time occupancy.
-- When OSM data is unavailable (timeout, network error, no results), the app falls back to fully simulated demo parking data.
+- When OSM data is unavailable, the app falls back to simulated demo parking data.
 
 Always verify parking availability on-site.
 
 ---
 
-## ??? Tech Stack
+## Tech Stack
 
-- **Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-- **Bundler & Tooling**: [Vite](https://vite.dev/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **Map**: [Leaflet](https://leafletjs.com/) + [React-Leaflet](https://react-leaflet.js.org/)
-- **Parking Data**: [OpenStreetMap](https://www.openstreetmap.org/) via [Overpass API](https://overpass-api.de/) (with DemoParkingProvider fallback)
-- **Geolocation**: Browser Geolocation API (two-tier high/standard accuracy)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **PWA Engine**: [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
-- **Typography**: [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans)
-
----
-
-## ?? Project Architecture
-
-```
-ParkWise/
-+-- src/
-¦   +-- components/
-¦   ¦   +-- LeafletMap.tsx        # Leaflet map with OSM tiles
-¦   ¦   +-- MapSurface.tsx        # Map shell + controls + attribution
-¦   ¦   +-- ParkingRecommendationCard.tsx
-¦   ¦   +-- ParkingDetailModal.tsx
-¦   ¦   +-- ...
-¦   +-- services/parking/
-¦   ¦   +-- osmProvider.ts        # Overpass API provider
-¦   ¦   +-- demoProvider.ts       # Deterministic fallback
-¦   ¦   +-- parkingService.ts     # Primary -> fallback orchestrator
-¦   ¦   +-- types.ts              # ParkingProvider interface
-¦   +-- hooks/
-¦   ¦   +-- useParkingDiscovery.ts
-¦   ¦   +-- useUserLocation.ts
-¦   +-- data/
-¦   ¦   +-- mockParking.ts
-¦   ¦   +-- parking.ts
-¦   +-- types/index.ts
-+-- vite.config.ts
-```
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 19 + TypeScript |
+| Bundler | Vite |
+| Styling | Tailwind CSS v4 |
+| Map | Leaflet + OpenStreetMap |
+| Parking data | Overpass API â†’ DemoParkingProvider fallback |
+| AI inference | Groq (Llama 3.1 8B Instant) |
+| Geolocation | Browser Geolocation API |
+| PWA | vite-plugin-pwa |
 
 ---
 
-## ?? Getting Started
+## Getting Started
 
 ```bash
-git clone https://github.com/your-username/parkwise.git
-cd parkwise
+git clone https://github.com/PranavJey/ParkWise.git
+cd ParkWise
 npm install
+cp .env.example .env
+# Add your VITE_GROQ_API_KEY to .env (free at console.groq.com)
 npm run dev
 ```
 
 Visit `http://localhost:5173`.
 
+### AI Setup
+
+1. Sign up for a free account at [console.groq.com](https://console.groq.com)
+2. Create an API key
+3. Add it to your `.env`:
+
+```
+VITE_GROQ_API_KEY=your_key_here
+```
+
+Without the key, ParkWise AI uses a local fallback parser â€” the recommendation engine still works, just without the LLM.
+
+### Production Build
+
 ```bash
-# Production build
 npm run build
 npm run preview
 ```
 
 ---
 
-## ?? Open Source License
+## Privacy
 
-This project is licensed under the [MIT License](LICENSE).
-Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), ODbL.
+ParkWise requests browser geolocation to show nearby parking. Location data is used only within your browser session and is sent to Groq only as part of the parking recommendation request (as distance/walking time numbers, not raw coordinates).
+
+---
+
+## License
+
+[MIT License](LICENSE)
+Map data Â© [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), ODbL.
+AI inference via Groq using Llama 3.1, subject to [Meta Llama 3.1 Community License](https://llama.meta.com/llama3_1/license/).

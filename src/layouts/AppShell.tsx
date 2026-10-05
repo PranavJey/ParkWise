@@ -53,13 +53,7 @@ export const AppShell: React.FC = () => {
     }
   };
 
-  const handlePrompt = (prompt: string) => {
-    const p = prompt.toLowerCase();
-    if (p.includes('ev')) setActiveFilter('ev_charging');
-    else if (p.includes('cheap') || p.includes('budget')) setActiveFilter('budget');
-    else if (p.includes('avail')) setActiveFilter('high_availability');
-    else if (p.includes('covered')) setActiveFilter('covered');
-  };
+  // handlePrompt removed — Phase 5 AI modal handles its own preference extraction.
 
   const handleTabChange = (tab: NavigationTab) => {
     setActiveTab(tab);
@@ -300,7 +294,8 @@ export const AppShell: React.FC = () => {
       <AIModal
         isOpen={aiOpen}
         onClose={() => setAIOpen(false)}
-        onSelectPrompt={handlePrompt}
+        parkingSpots={filtered}
+        onSelectParking={handleSelect}
       />
     </div>
   );

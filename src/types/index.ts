@@ -10,15 +10,14 @@ export type Amenity =
 
 export type ParkingType = 'covered' | 'open' | 'multilevel' | 'underground';
 
+/** Base parking definition — coordinates are real geo coordinates */
 export interface ParkingLocation {
   id: string;
   name: string;
   tagline: string;
-  availability: number; // 0 to 100 percentage
+  availability: number;     // 0-100 percentage
   status: AvailabilityStatus;
-  distance: number; // in meters
-  price: number; // in INR (₹/hr)
-  walkingTime: number; // in minutes
+  price: number;            // ₹/hr
   latitude: number;
   longitude: number;
   address: string;
@@ -28,10 +27,12 @@ export interface ParkingLocation {
   amenities: Amenity[];
   rating: number;
   reviewsCount: number;
-  mapCoords: {
-    x: number; // percentage X position on placeholder map (0-100)
-    y: number; // percentage Y position on placeholder map (0-100)
-  };
+}
+
+/** Parking with computed distance & walking estimate from user location */
+export interface ParkingWithDistance extends ParkingLocation {
+  distance: number;       // metres, calculated from user position
+  walkingTime: number;    // estimated minutes at 80 m/min walking pace
 }
 
 export type FilterOption =
@@ -42,3 +43,39 @@ export type FilterOption =
   | 'budget';
 
 export type NavigationTab = 'map' | 'parking' | 'ai';
+
+// ─── Location types ─────────────────────────────────────────────────────────
+
+export type LocationPermissionState = 'prompt' | 'granted' | 'denied' | 'unsupported';
+
+export type LocationStatus =
+  | 'idle'
+  | 'loading'
+  | 'granted'
+  | 'permission_denied'
+  | 'unavailable'
+  | 'timeout'
+  | 'unsupported';
+
+export type LocationErrorKind =
+  | 'permission_denied'
+  | 'unavailable'
+  | 'position_unavailable'
+  | 'timeout'
+  | 'unsupported';
+
+export interface UserLocation {
+  latitude: number;
+  longitude: number;
+  accuracy: number;       // metres
+  timestamp: number;      // Date.now()
+  isApproximate?: boolean;
+}
+
+export interface LocationState {
+  status: LocationStatus;
+  location: UserLocation | null;
+  loading: boolean;
+  error: LocationErrorKind | null;
+  permissionState: LocationPermissionState;
+}

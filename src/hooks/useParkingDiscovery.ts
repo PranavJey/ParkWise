@@ -1,15 +1,15 @@
 import { useState, useMemo, useCallback } from 'react';
-import type { ParkingLocation, FilterOption } from '@/types';
-import { MOCK_PARKING_LOCATIONS } from '@/data/mockParking';
+import type { ParkingWithDistance, FilterOption } from '@/types';
+import { FALLBACK_PARKINGS } from '@/data/parking';
 
-export function useParkingDiscovery() {
+export function useParkingDiscovery(initialParkings: ParkingWithDistance[] = FALLBACK_PARKINGS) {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
-  const [selectedParkingId, setSelectedParkingId] = useState<string>(MOCK_PARKING_LOCATIONS[0].id);
+  const [selectedParkingId, setSelectedParkingId] = useState<string>(initialParkings[0]?.id ?? '');
 
   // Real-time filtered parking locations
   const filteredParkings = useMemo(() => {
-    return MOCK_PARKING_LOCATIONS.filter((parking) => {
+    return initialParkings.filter((parking: ParkingWithDistance) => {
       const query = searchQuery.trim().toLowerCase();
       const matchesSearch =
         query === '' ||
@@ -33,18 +33,18 @@ export function useParkingDiscovery() {
           return true;
       }
     });
-  }, [searchQuery, activeFilter]);
+  }, [initialParkings, searchQuery, activeFilter]);
 
   // Selected parking object
   const selectedParking = useMemo(() => {
     return (
-      filteredParkings.find((p) => p.id === selectedParkingId) ||
+      filteredParkings.find((p: ParkingWithDistance) => p.id === selectedParkingId) ||
       filteredParkings[0] ||
       null
     );
   }, [filteredParkings, selectedParkingId]);
 
-  const selectParking = useCallback((parking: ParkingLocation) => {
+  const selectParking = useCallback((parking: ParkingWithDistance) => {
     setSelectedParkingId(parking.id);
   }, []);
 

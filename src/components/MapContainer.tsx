@@ -154,8 +154,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             key={parking.id}
             className="absolute transition-all duration-300"
             style={{
-              left: `${parking.mapCoords.x}%`,
-              top: `${parking.mapCoords.y}%`,
+              left: `${(parking as unknown as { mapCoords?: { x: number } }).mapCoords?.x ?? 50}%`,
+              top: `${(parking as unknown as { mapCoords?: { y: number } }).mapCoords?.y ?? 50}%`,
               transform: 'translate(-50%, -100%)',
             }}
           >

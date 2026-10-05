@@ -1,152 +1,137 @@
 import type { ParkingLocation, FilterOption } from '@/types';
 
-export const MOCK_PARKING_LOCATIONS: ParkingLocation[] = [
+/**
+ * MOCK PARKING DATA — Phase 2
+ *
+ * Parking locations are defined as geographic offsets (metres) from the
+ * user's current position. This ensures the prototype works regardless of
+ * where the tester runs it.
+ *
+ * ⚠  These are SIMULATED locations for development/demo purposes only.
+ *    They do NOT represent real parking facilities.
+ *
+ * Actual coordinates are computed at runtime via buildMockParkings()
+ * in src/data/parking.ts using the user's real geolocation.
+ */
+
+export interface ParkingTemplate
+  extends Omit<ParkingLocation, 'latitude' | 'longitude'> {
+  /** Offset from user in metres (positive = north/east) */
+  latOffsetM: number;
+  lonOffsetM: number;
+}
+
+export const PARKING_TEMPLATES: ParkingTemplate[] = [
   {
-    id: 'loc-1',
+    id: 'pk-1',
     name: 'Central Parking',
-    tagline: 'Multi-level premium covered parking',
+    tagline: 'Multi-level covered — 4 floors',
     availability: 82,
     status: 'high',
-    distance: 350,
     price: 30,
-    walkingTime: 4,
-    latitude: 28.6328,
-    longitude: 77.2197,
-    address: 'Block B, Connaught Circus, Central District',
+    address: 'Demo Area — Simulated location',
     totalSpots: 240,
     availableSpots: 196,
     type: 'multilevel',
     amenities: ['covered', 'ev_charging', 'cctv', 'handicap', '24_7'],
     rating: 4.8,
     reviewsCount: 312,
-    mapCoords: {
-      x: 48,
-      y: 42,
-    },
+    latOffsetM: 200,
+    lonOffsetM: -150,
   },
   {
-    id: 'loc-2',
+    id: 'pk-2',
     name: 'City Mall Parking',
-    tagline: 'Underground retail basement bays',
+    tagline: 'Underground retail basement',
     availability: 54,
     status: 'medium',
-    distance: 500,
     price: 20,
-    walkingTime: 6,
-    latitude: 28.6342,
-    longitude: 77.2165,
-    address: 'Galleria Mall, Outer Ring Road',
+    address: 'Demo Area — Simulated location',
     totalSpots: 180,
     availableSpots: 97,
     type: 'underground',
     amenities: ['covered', 'cctv', 'handicap', 'valet'],
     rating: 4.5,
     reviewsCount: 184,
-    mapCoords: {
-      x: 28,
-      y: 28,
-    },
+    latOffsetM: 380,
+    lonOffsetM: 200,
   },
   {
-    id: 'loc-3',
+    id: 'pk-3',
     name: 'Metro Parking',
     tagline: 'Transit interchange smart lot',
     availability: 24,
     status: 'low',
-    distance: 700,
     price: 40,
-    walkingTime: 8,
-    latitude: 28.6365,
-    longitude: 77.2241,
-    address: 'Gate 3, Central Metro Station',
+    address: 'Demo Area — Simulated location',
     totalSpots: 120,
     availableSpots: 28,
     type: 'open',
     amenities: ['cctv', '24_7', 'handicap'],
     rating: 4.1,
     reviewsCount: 95,
-    mapCoords: {
-      x: 74,
-      y: 35,
-    },
+    latOffsetM: -250,
+    lonOffsetM: 300,
   },
   {
-    id: 'loc-4',
+    id: 'pk-4',
     name: 'Grand Plaza Garage',
-    tagline: 'Automated barrier & EV fast chargers',
+    tagline: 'Automated barrier + EV fast chargers',
     availability: 91,
     status: 'high',
-    distance: 280,
     price: 35,
-    walkingTime: 3,
-    latitude: 28.6315,
-    longitude: 77.218,
-    address: '14 Barakhamba Boulevard',
+    address: 'Demo Area — Simulated location',
     totalSpots: 310,
     availableSpots: 282,
     type: 'multilevel',
     amenities: ['covered', 'ev_charging', 'cctv', 'valet', '24_7', 'handicap'],
     rating: 4.9,
     reviewsCount: 420,
-    mapCoords: {
-      x: 38,
-      y: 64,
-    },
+    latOffsetM: -100,
+    lonOffsetM: -320,
   },
   {
-    id: 'loc-5',
+    id: 'pk-5',
     name: 'Tech Park Avenue',
-    tagline: 'Spacious solar canopy surface lot',
+    tagline: 'Solar canopy surface lot',
     availability: 68,
     status: 'medium',
-    distance: 850,
     price: 25,
-    walkingTime: 10,
-    latitude: 28.6291,
-    longitude: 77.2274,
-    address: 'East Tower Complex, Cyber Way',
+    address: 'Demo Area — Simulated location',
     totalSpots: 200,
     availableSpots: 136,
     type: 'covered',
     amenities: ['ev_charging', 'cctv', '24_7'],
     rating: 4.4,
     reviewsCount: 160,
-    mapCoords: {
-      x: 82,
-      y: 68,
-    },
+    latOffsetM: 500,
+    lonOffsetM: -80,
   },
   {
-    id: 'loc-6',
+    id: 'pk-6',
     name: 'Heritage Station Hub',
-    tagline: 'Economical city center ground parking',
+    tagline: 'Economy ground parking',
     availability: 15,
     status: 'low',
-    distance: 1100,
     price: 15,
-    walkingTime: 14,
-    latitude: 28.6385,
-    longitude: 77.2132,
-    address: 'Old Railway Approach Road',
+    address: 'Demo Area — Simulated location',
     totalSpots: 90,
     availableSpots: 14,
     type: 'open',
     amenities: ['cctv'],
     rating: 3.9,
     reviewsCount: 88,
-    mapCoords: {
-      x: 18,
-      y: 78,
-    },
+    latOffsetM: -420,
+    lonOffsetM: 160,
   },
 ];
 
-export const FILTER_OPTIONS: { id: FilterOption; label: string; iconName?: string }[] = [
-  { id: 'all', label: 'All spots' },
+export const FILTER_OPTIONS: { id: FilterOption; label: string }[] = [
+  { id: 'all',               label: 'All spots' },
   { id: 'high_availability', label: 'High availability (>70%)' },
-  { id: 'ev_charging', label: '⚡ EV Charging' },
-  { id: 'covered', label: '☂ Covered' },
-  { id: 'budget', label: '🏷 Under ₹30/hr' },
+  { id: 'ev_charging',       label: '⚡ EV Charging' },
+  { id: 'covered',           label: '☂ Covered' },
+  { id: 'budget',            label: '🏷 Under ₹30/hr' },
 ];
 
 export const AI_QUICK_PROMPTS = [

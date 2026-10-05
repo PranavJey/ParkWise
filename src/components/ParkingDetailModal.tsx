@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import type { ParkingLocation } from '@/types';
+import type { ParkingWithDistance } from '@/types';
 import { AvailabilityBadge } from './AvailabilityBadge';
 import { formatDistance, formatPrice } from '@/lib/utils';
 import { X, MapPin, Clock, Zap, ShieldCheck, Info, Navigation } from 'lucide-react';
 
 interface ParkingDetailModalProps {
-  parking: ParkingLocation | null;
+  parking: ParkingWithDistance | null;
   onClose: () => void;
   onNavigate?: () => void;
 }
@@ -134,7 +134,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
           <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-blue-50 border border-blue-100 text-xs text-blue-900">
             <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
             <span>
-              <strong>Phase 1 Demo</strong> — Data is simulated. Live availability and navigation arrive in Phase 2.
+              <strong>Live GPS Anchor</strong> — Coordinates and walking distance are relative to your current location.
             </span>
           </div>
         </div>

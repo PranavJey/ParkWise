@@ -1,12 +1,12 @@
 import React from 'react';
-import type { ParkingLocation } from '@/types';
+import type { ParkingWithDistance } from '@/types';
 import { AvailabilityBadge } from './AvailabilityBadge';
 import { formatDistance, formatPrice } from '@/lib/utils';
 import { MapPin, Clock, Navigation, ChevronRight, Zap, Umbrella } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ParkingRecommendationCardProps {
-  parking: ParkingLocation;
+  parking: ParkingWithDistance;
   selected?: boolean;
   onSelect?: () => void;
   onViewDetails?: () => void;

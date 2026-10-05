@@ -10,18 +10,16 @@ import type { FilterOption } from '@/types';
  * ⚠  These are SIMULATED locations for development/demo purposes only.
  *    They do NOT represent real parking facilities.
  *
- * Actual coordinates are computed at runtime via buildMockParkings()
- * in src/data/parking.ts using the user's real geolocation.
+ * Names are intentionally omitted here — DemoParkingProvider assigns
+ * "Parking 1", "Parking 2", etc. at runtime to avoid location-specific labels.
  */
 
 export interface ParkingTemplate {
   id: string;
-  name: string;
   tagline: string;
   availability: number;
   status: 'high' | 'medium' | 'low';
   price: number;
-  address: string;
   totalSpots: number;
   availableSpots: number;
   type: 'covered' | 'open' | 'multilevel' | 'underground';
@@ -36,12 +34,10 @@ export interface ParkingTemplate {
 export const PARKING_TEMPLATES: ParkingTemplate[] = [
   {
     id: 'pk-1',
-    name: 'Central Parking',
     tagline: 'Multi-level covered — 4 floors',
     availability: 82,
     status: 'high',
     price: 30,
-    address: 'Demo Area — Simulated location',
     totalSpots: 240,
     availableSpots: 196,
     type: 'multilevel',
@@ -53,12 +49,10 @@ export const PARKING_TEMPLATES: ParkingTemplate[] = [
   },
   {
     id: 'pk-2',
-    name: 'City Mall Parking',
     tagline: 'Underground retail basement',
     availability: 54,
     status: 'medium',
     price: 20,
-    address: 'Demo Area — Simulated location',
     totalSpots: 180,
     availableSpots: 97,
     type: 'underground',
@@ -70,12 +64,10 @@ export const PARKING_TEMPLATES: ParkingTemplate[] = [
   },
   {
     id: 'pk-3',
-    name: 'Metro Parking',
-    tagline: 'Transit interchange smart lot',
+    tagline: 'Surface lot near transit interchange',
     availability: 24,
     status: 'low',
     price: 40,
-    address: 'Demo Area — Simulated location',
     totalSpots: 120,
     availableSpots: 28,
     type: 'open',
@@ -87,12 +79,10 @@ export const PARKING_TEMPLATES: ParkingTemplate[] = [
   },
   {
     id: 'pk-4',
-    name: 'Grand Plaza Garage',
     tagline: 'Automated barrier + EV fast chargers',
     availability: 91,
     status: 'high',
     price: 35,
-    address: 'Demo Area — Simulated location',
     totalSpots: 310,
     availableSpots: 282,
     type: 'multilevel',
@@ -104,12 +94,10 @@ export const PARKING_TEMPLATES: ParkingTemplate[] = [
   },
   {
     id: 'pk-5',
-    name: 'Tech Park Avenue',
     tagline: 'Solar canopy surface lot',
     availability: 68,
     status: 'medium',
     price: 25,
-    address: 'Demo Area — Simulated location',
     totalSpots: 200,
     availableSpots: 136,
     type: 'covered',
@@ -121,12 +109,10 @@ export const PARKING_TEMPLATES: ParkingTemplate[] = [
   },
   {
     id: 'pk-6',
-    name: 'Heritage Station Hub',
-    tagline: 'Economy ground parking',
+    tagline: 'Economy open-air ground parking',
     availability: 15,
     status: 'low',
     price: 15,
-    address: 'Demo Area — Simulated location',
     totalSpots: 90,
     availableSpots: 14,
     type: 'open',

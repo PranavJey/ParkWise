@@ -47,6 +47,12 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
             <h2 id="detail-title" className="text-xl font-bold text-zinc-950 tracking-tight">
               {parking.name}
             </h2>
+            {parking.nearestLandmark && (
+              <p className="flex items-center gap-1.5 mt-1 text-zinc-700 text-xs font-semibold">
+                <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                {parking.nearestLandmark}
+              </p>
+            )}
             <div className="flex items-center gap-1.5 mt-1 text-zinc-500 text-xs font-medium">
               <MapPin className="w-3 h-3" />
               {parking.address}

@@ -248,6 +248,22 @@ export class OpenStreetMapParkingProvider implements ParkingProvider {
         tagline = `${tags.access.charAt(0).toUpperCase() + tags.access.slice(1)} parking`;
       }
 
+      // Nearest landmark — derived from OSM address tags where available.
+      // Prefer fine-grained locality names; fall back to operator or city.
+      const nearestLandmark: string | undefined = (() => {
+        const area =
+          tags['addr:suburb'] ||
+          tags['addr:neighbourhood'] ||
+          tags['addr:city_district'] ||
+          tags['addr:quarter'] ||
+          tags['addr:village'] ||
+          tags['addr:town'] ||
+          tags['addr:city'];
+        if (area) return `Near ${area}`;
+        if (tags.operator) return `Near ${tags.operator}`;
+        return undefined;
+      })();
+
       const deterministicRating = Number((4.0 + (Math.abs(el.id % 9) * 0.1)).toFixed(1));
       const deterministicReviews = 20 + Math.abs(el.id % 180);
 
@@ -275,6 +291,7 @@ export class OpenStreetMapParkingProvider implements ParkingProvider {
         amenities,
         rating: deterministicRating,
         reviewsCount: deterministicReviews,
+        nearestLandmark,
 
         // UI aliases
         distance: distanceMeters,

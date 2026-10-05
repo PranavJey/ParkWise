@@ -22,6 +22,9 @@ export const DEFAULT_DEMO_COORDINATES = {
  * Preserved for backwards compatibility with any synchronous utilities.
  * Primary application logic should consume parkingService.getNearbyParking()
  * via useParkingDiscovery().
+ *
+ * Names are assigned sequentially ("Parking 1", "Parking 2", ...) to avoid
+ * any city-specific references in the template data.
  */
 export function buildMockParkings(
   userLat: number,
@@ -29,7 +32,7 @@ export function buildMockParkings(
 ): ParkingSpot[] {
   const lastUpdated = new Date(Date.now() - 300_000).toISOString();
 
-  return PARKING_TEMPLATES.map((t) => {
+  return PARKING_TEMPLATES.map((t, index) => {
     const latitude = userLat + metresToLatDelta(t.latOffsetM);
     const longitude = userLon + metresToLonDelta(t.lonOffsetM, userLat);
 
@@ -40,7 +43,7 @@ export function buildMockParkings(
 
     return {
       id: t.id,
-      name: t.name,
+      name: `Parking ${index + 1}`,
       latitude,
       longitude,
       distanceMeters,
@@ -52,7 +55,7 @@ export function buildMockParkings(
       currency: 'INR',
       covered: t.amenities.includes('covered'),
       evCharging: t.amenities.includes('ev_charging'),
-      address: t.address,
+      address: 'Demo area · simulated location',
       lastUpdated,
       source: 'demo' as const,
 

@@ -41,6 +41,12 @@ export const ParkingRecommendationCard: React.FC<ParkingRecommendationCardProps>
           <h3 className="text-base font-bold text-zinc-950 tracking-tight truncate leading-tight">
             {parking.name}
           </h3>
+          {parking.nearestLandmark && (
+            <p className="text-xs text-zinc-500 font-medium mt-0.5 truncate flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+              {parking.nearestLandmark}
+            </p>
+          )}
           <p className="text-xs text-zinc-400 font-medium mt-0.5 truncate">{parking.tagline}</p>
         </div>
         <AvailabilityBadge availability={parking.availability} status={parking.status} className="shrink-0" />

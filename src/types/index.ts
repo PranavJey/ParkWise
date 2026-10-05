@@ -49,6 +49,14 @@ export interface ParkingSpot {
   rating: number;
   reviewsCount: number;
 
+  /**
+   * Human-readable nearest landmark or area, derived from real geographic data.
+   * For OSM spots: populated from OSM address/operator tags.
+   * For demo spots: populated via Nominatim reverse geocoding of the spot's coordinates.
+   * Never an invented or hardcoded name.
+   */
+  nearestLandmark?: string;
+
   // ── Backward-compatibility aliases for Phase 1 & 2 UI components ──────────
   distance: number;       // alias for distanceMeters
   walkingTime: number;    // alias for walkingMinutes

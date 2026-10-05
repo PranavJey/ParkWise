@@ -1,4 +1,15 @@
 @import "leaflet/dist/leaflet.css";
+
+/*
+ * Scope Leaflet's internal z-index layers (panes: 400, controls: 800/1000)
+ * entirely within the map container. Without this, .leaflet-control and
+ * .leaflet-pane bleed above fixed modals even when the modal has z-index:50.
+ * The isolation:isolate on the JS wrapper div in AppShell.tsx reinforces this.
+ */
+.leaflet-container {
+  isolation: isolate;
+}
+
 @import "tailwindcss";
 
 @theme {

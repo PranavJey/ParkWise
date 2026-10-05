@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useRef } from 'react';
-import type { ParkingWithDistance, NavigationTab } from '@/types';
-import { FILTER_OPTIONS } from '@/data/mockParking';
-import { buildMockParkings, FALLBACK_PARKINGS } from '@/data/parking';
+import React, { useState, useRef } from 'react';
+import type { ParkingSpot, NavigationTab } from '@/types';
+import { FILTER_OPTIONS } from '@/services/parking';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { useParkingDiscovery } from '@/hooks/useParkingDiscovery';
 import { MapSurface, type MapSurfaceHandle } from '@/components/MapSurface';
 import { ParkingRecommendationCard } from '@/components/ParkingRecommendationCard';
 import { AIAction } from '@/components/AIAction';
@@ -16,10 +16,7 @@ import { SlidersHorizontal } from 'lucide-react';
 
 export const AppShell: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavigationTab>('map');
-  const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [selectedId, setSelectedId] = useState<string>('pk-1');
-  const [detailParking, setDetailParking] = useState<ParkingWithDistance | null>(null);
+  const [detailParking, setDetailParking] = useState<ParkingSpot | null>(null);
   const [aiOpen, setAIOpen] = useState(false);
 
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -34,46 +31,22 @@ export const AppShell: React.FC = () => {
     retry: retryLocation,
   } = useUserLocation();
 
-  // Dynamic parking spots anchored to user position (or fallback)
-  const allParkings = useMemo(() => {
-    if (location) {
-      return buildMockParkings(location.latitude, location.longitude);
-    }
-    return FALLBACK_PARKINGS;
-  }, [location]);
+  // Phase 3: Data layer discovery hook powered by ParkingService
+  const {
+    filteredParkings: filtered,
+    selectedParking: selected,
+    selectParking,
+    searchQuery: search,
+    setSearchQuery: setSearch,
+    activeFilter,
+    setActiveFilter,
+    resetFilters,
+  } = useParkingDiscovery({
+    userLocation: location,
+  });
 
-  // Filter parking list
-  const filtered = useMemo(() => {
-    return allParkings.filter((p) => {
-      const q = search.toLowerCase();
-      const matchesSearch =
-        !q ||
-        p.name.toLowerCase().includes(q) ||
-        p.address.toLowerCase().includes(q) ||
-        p.tagline.toLowerCase().includes(q);
-      if (!matchesSearch) return false;
-      switch (activeFilter) {
-        case 'high_availability':
-          return p.availability >= 70;
-        case 'ev_charging':
-          return p.amenities.includes('ev_charging');
-        case 'covered':
-          return p.amenities.includes('covered');
-        case 'budget':
-          return p.price <= 25;
-        default:
-          return true;
-      }
-    });
-  }, [allParkings, search, activeFilter]);
-
-  const selected = useMemo(
-    () => filtered.find((p) => p.id === selectedId) ?? filtered[0] ?? null,
-    [filtered, selectedId]
-  );
-
-  const handleSelect = (p: ParkingWithDistance) => {
-    setSelectedId(p.id);
+  const handleSelect = (p: ParkingSpot) => {
+    selectParking(p);
     if (carouselRef.current) {
       const el = carouselRef.current.querySelector<HTMLElement>(`[data-id="${p.id}"]`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -219,10 +192,7 @@ export const AppShell: React.FC = () => {
                   <p className="text-xs text-zinc-400 mt-1">Clear your search or change filters</p>
                   <button
                     type="button"
-                    onClick={() => {
-                      setSearch('');
-                      setActiveFilter('all');
-                    }}
+                    onClick={resetFilters}
                     className="mt-4 px-4 py-2 rounded-full bg-zinc-950 text-white text-xs font-semibold cursor-pointer"
                   >
                     Reset
@@ -289,7 +259,11 @@ export const AppShell: React.FC = () => {
               activeTab === 'parking' ? 'hidden lg:flex' : 'flex order-1 lg:order-2'
             )}
           >
-            <div style={{ height: 'clamp(320px, 48vw, 620px)' }}>
+            {/* isolation: isolate creates a new stacking context that scopes
+                Leaflet's internal z-indexes (400/800/1000) to the map container.
+                This prevents .leaflet-control and .leaflet-pane from bleeding
+                above the ParkingDetailModal which renders outside this DOM subtree. */}
+            <div style={{ height: 'clamp(320px, 48vw, 620px)', isolation: 'isolate' }}>
               <MapSurface
                 ref={mapSurfaceRef}
                 userLocation={location}

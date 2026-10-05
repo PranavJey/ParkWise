@@ -1,4 +1,4 @@
-import type { ParkingLocation, FilterOption } from '@/types';
+import type { FilterOption } from '@/types';
 
 /**
  * MOCK PARKING DATA — Phase 2
@@ -14,8 +14,20 @@ import type { ParkingLocation, FilterOption } from '@/types';
  * in src/data/parking.ts using the user's real geolocation.
  */
 
-export interface ParkingTemplate
-  extends Omit<ParkingLocation, 'latitude' | 'longitude'> {
+export interface ParkingTemplate {
+  id: string;
+  name: string;
+  tagline: string;
+  availability: number;
+  status: 'high' | 'medium' | 'low';
+  price: number;
+  address: string;
+  totalSpots: number;
+  availableSpots: number;
+  type: 'covered' | 'open' | 'multilevel' | 'underground';
+  amenities: ('ev_charging' | 'covered' | 'cctv' | 'handicap' | 'valet' | '24_7')[];
+  rating: number;
+  reviewsCount: number;
   /** Offset from user in metres (positive = north/east) */
   latOffsetM: number;
   lonOffsetM: number;

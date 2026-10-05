@@ -1,4 +1,4 @@
-import type { ParkingLocation, ParkingWithDistance } from '@/types';
+import type { ParkingSpot } from '@/types';
 import { PARKING_TEMPLATES } from './mockParking';
 import {
   metresToLatDelta,
@@ -9,7 +9,7 @@ import {
 
 /**
  * Default coordinates for development demo mode when geolocation is
- * unavailable or permission is denied.
+ * unavailable or permission is denied (Bengaluru City Center).
  */
 export const DEFAULT_DEMO_COORDINATES = {
   latitude: 12.9716,
@@ -17,52 +17,67 @@ export const DEFAULT_DEMO_COORDINATES = {
 };
 
 /**
- * Builds the mock parking dataset anchored to the user's real coordinates.
+ * Builds a synchronous parking dataset anchored to specific coordinates.
  *
- * Each parking location is placed at a fixed offset (metres) from the
- * supplied position, then has its distance and walking time computed.
- *
- * This function is pure — call it whenever the user's location updates.
+ * Preserved for backwards compatibility with any synchronous utilities.
+ * Primary application logic should consume parkingService.getNearbyParking()
+ * via useParkingDiscovery().
  */
 export function buildMockParkings(
   userLat: number,
-  userLon: number,
-): ParkingWithDistance[] {
+  userLon: number
+): ParkingSpot[] {
+  const lastUpdated = new Date(Date.now() - 300_000).toISOString();
+
   return PARKING_TEMPLATES.map((t) => {
     const latitude = userLat + metresToLatDelta(t.latOffsetM);
     const longitude = userLon + metresToLonDelta(t.lonOffsetM, userLat);
 
-    const distance = haversineDistance(userLat, userLon, latitude, longitude);
-    const walkingTime = estimateWalkingTime(distance);
+    const distanceMeters = Math.round(
+      haversineDistance(userLat, userLon, latitude, longitude)
+    );
+    const walkingMinutes = estimateWalkingTime(distanceMeters);
 
-    const base: ParkingLocation = {
+    return {
       id: t.id,
       name: t.name,
-      tagline: t.tagline,
-      availability: t.availability,
-      status: t.status,
-      price: t.price,
       latitude,
       longitude,
+      distanceMeters,
+      walkingMinutes,
+      availabilityPercentage: t.availability,
+      availableSpaces: t.availableSpots,
+      totalCapacity: t.totalSpots,
+      pricePerHour: t.price,
+      currency: 'INR',
+      covered: t.amenities.includes('covered'),
+      evCharging: t.amenities.includes('ev_charging'),
       address: t.address,
-      totalSpots: t.totalSpots,
-      availableSpots: t.availableSpots,
+      lastUpdated,
+      source: 'demo' as const,
+
+      tagline: t.tagline,
+      status: t.status,
       type: t.type,
       amenities: t.amenities,
       rating: t.rating,
       reviewsCount: t.reviewsCount,
-    };
 
-    return { ...base, distance, walkingTime };
+      // Aliases
+      distance: distanceMeters,
+      walkingTime: walkingMinutes,
+      availability: t.availability,
+      availableSpots: t.availableSpots,
+      totalSpots: t.totalSpots,
+      price: t.price,
+    };
   });
 }
 
 /**
  * Fallback dataset when the user's location is unavailable.
- *
- * Uses the default demo coordinates for realistic street-grid display in demo mode.
  */
-export const FALLBACK_PARKINGS: ParkingWithDistance[] = buildMockParkings(
+export const FALLBACK_PARKINGS: ParkingSpot[] = buildMockParkings(
   DEFAULT_DEMO_COORDINATES.latitude,
-  DEFAULT_DEMO_COORDINATES.longitude,
+  DEFAULT_DEMO_COORDINATES.longitude
 );

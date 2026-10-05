@@ -10,30 +10,59 @@ export type Amenity =
 
 export type ParkingType = 'covered' | 'open' | 'multilevel' | 'underground';
 
-/** Base parking definition — coordinates are real geo coordinates */
-export interface ParkingLocation {
+export type ParkingSource =
+  | 'demo'
+  | 'open-data'
+  | 'community'
+  | 'sensor'
+  | 'api';
+
+/**
+ * Normalized canonical ParkingSpot model.
+ *
+ * Designed to support both current prototype requirements and future
+ * AI reasoning (availability, distance, walking time, pricing, facilities, provenance).
+ */
+export interface ParkingSpot {
   id: string;
   name: string;
-  tagline: string;
-  availability: number;     // 0-100 percentage
-  status: AvailabilityStatus;
-  price: number;            // ₹/hr
   latitude: number;
   longitude: number;
+  distanceMeters: number;
+  walkingMinutes: number;
+  availabilityPercentage: number;
+  availableSpaces: number;
+  totalCapacity: number;
+  pricePerHour: number;
+  currency: string;
+  covered: boolean;
+  evCharging: boolean;
   address: string;
-  totalSpots: number;
-  availableSpots: number;
+  lastUpdated: string;
+  source: ParkingSource;
+
+  // Additional structured metadata
+  tagline: string;
+  status: AvailabilityStatus;
   type: ParkingType;
   amenities: Amenity[];
   rating: number;
   reviewsCount: number;
+
+  // ── Backward-compatibility aliases for Phase 1 & 2 UI components ──────────
+  distance: number;       // alias for distanceMeters
+  walkingTime: number;    // alias for walkingMinutes
+  availability: number;   // alias for availabilityPercentage
+  availableSpots: number; // alias for availableSpaces
+  totalSpots: number;     // alias for totalCapacity
+  price: number;          // alias for pricePerHour
 }
 
-/** Parking with computed distance & walking estimate from user location */
-export interface ParkingWithDistance extends ParkingLocation {
-  distance: number;       // metres, calculated from user position
-  walkingTime: number;    // estimated minutes at 80 m/min walking pace
-}
+/** Base parking definition */
+export type ParkingLocation = ParkingSpot;
+
+/** Parking with computed distance & walking estimate from anchor location */
+export type ParkingWithDistance = ParkingSpot;
 
 export type FilterOption =
   | 'all'

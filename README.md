@@ -2,139 +2,118 @@
 
 > **"Find parking. Park smarter."**
 
-ParkWise is an open-source, AI-powered parking discovery Progressive Web Application (PWA) designed to simplify urban mobility. ParkWise will help drivers find nearby parking spaces, check live bay availability, receive contextual AI-driven recommendations, and navigate effortlessly to selected parking destinations.
+ParkWise is an open-source, AI-powered parking discovery Progressive Web Application (PWA) designed to simplify urban mobility. ParkWise helps drivers discover real nearby parking spaces via OpenStreetMap, check estimated availability, and navigate effortlessly to selected parking destinations.
 
 ---
 
-## 📌 Project Status: Phase 1 — UI Foundation & Design System
+## ?? Project Status: Phase 4 � Real Parking Locations (OSM + Overpass)
 
-This repository currently implements **Phase 1: Responsive PWA Foundation + UI System**.
-
-### Current Status & Boundaries:
-- **UI & Design System**: Completed. Implements a responsive, mobile-first design system inspired by modern consumer mobility and travel apps.
-- **Parking Data**: Currently uses isolated simulated mock data (`src/data/mockParking.ts`) for frontend evaluation and interaction demonstration.
-- **Map Component**: Features a styled, interactive vector map placeholder abstraction (`<MapContainer />`) with dynamic markers and controls, prepared for drop-in integration with OpenStreetMap / Leaflet.
-- **AI Recommendation**: Restrained UI entry point (`<AIActionCard />` and `<AIModal />`) demonstrating query filtering without live model inference.
-- **Backend & Database**: Not yet implemented (reserved for Phase 2).
-- **Navigation & GPS**: Not yet implemented (reserved for Phase 2).
+| Phase | Feature | Status |
+|-------|---------|--------|
+| Phase 1 | Responsive PWA Foundation + UI System | ? Complete |
+| Phase 2 | Real Map (Leaflet + OSM) + Live Geolocation | ? Complete |
+| Phase 3 | Parking Data Layer & Provider Architecture | ? Complete |
+| **Phase 4** | **Real Parking Locations (Overpass API)** | ? Complete |
+| Phase 5 | AI Recommendation Engine | ?? Planned |
 
 ---
 
-## 🚀 Planned Features (Phase 2 & Phase 3 Roadmap)
+## ??? Data Sources & Attribution
 
-- 📍 **Live Location & Radius Search**: High-accuracy geolocation and radius discovery.
-- 🅿️ **Real-Time Parking Availability**: Live IoT sensor and parking provider data streams.
-- 🗺️ **OpenStreetMap & Leaflet Integration**: Interactive vector tiles, custom routing layers, and geocoding.
-- ✨ **AI Parking Recommendations**: Contextual machine learning scoring based on walking distance, turnover history, and rates.
-- 💬 **Natural Language Parking Queries**: Semantic search via open-source LLMs connected to a FastAPI backend.
-- 🧭 **Turn-by-Turn Navigation**: Direct routing guidance to parking entrance bays.
-- 📱 **Full PWA Offline Support**: Local caching and offline spot guidance.
+### OpenStreetMap / Overpass API
+
+Real parking location data is retrieved from the [OpenStreetMap](https://www.openstreetmap.org/) database via the public [Overpass API](https://overpass-api.de/).
+
+> � OpenStreetMap contributors, licensed under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/).
+
+Map tiles are provided by OpenStreetMap and rendered via [Leaflet](https://leafletjs.com/).
+
+#### Provider Hierarchy
+
+```
+OpenStreetMapParkingProvider (primary)
+  +-- On success (>0 results) ? real OSM parking locations displayed
+  +-- On failure / timeout / empty ? DemoParkingProvider (fallback)
+```
 
 ---
 
-## 🛠️ Tech Stack (Phase 1)
+## ?? Data Disclaimer
+
+> **Availability is estimated, not live.**
+
+ParkWise does **not** have access to real-time parking sensors, occupancy feeds, or bay-level IoT data.
+
+- **Location data** (name, latitude, longitude, parking type) is sourced from OpenStreetMap.
+- **Availability percentages, capacity, and pricing** are **deterministic estimates** generated from OSM metadata. They do **not** reflect real-time occupancy.
+- When OSM data is unavailable (timeout, network error, no results), the app falls back to fully simulated demo parking data.
+
+Always verify parking availability on-site.
+
+---
+
+## ??? Tech Stack
 
 - **Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
 - **Bundler & Tooling**: [Vite](https://vite.dev/)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Map**: [Leaflet](https://leafletjs.com/) + [React-Leaflet](https://react-leaflet.js.org/)
+- **Parking Data**: [OpenStreetMap](https://www.openstreetmap.org/) via [Overpass API](https://overpass-api.de/) (with DemoParkingProvider fallback)
+- **Geolocation**: Browser Geolocation API (two-tier high/standard accuracy)
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **PWA Engine**: [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
 - **Typography**: [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans)
 
 ---
 
-## 📁 Project Architecture
+## ?? Project Architecture
 
 ```
 ParkWise/
-├── public/                     # Static assets & PWA manifest icons
-│   ├── favicon.svg             # Vector brand icon
-│   └── icons/                  # PWA 192x192 & 512x512 icons
-├── src/
-│   ├── components/             # Domain components
-│   │   ├── ui/                 # Reusable design system primitives
-│   │   │   ├── PrimaryButton.tsx
-│   │   │   ├── SecondaryButton.tsx
-│   │   │   ├── IconButton.tsx
-│   │   │   ├── ParkingAvailabilityBadge.tsx
-│   │   │   ├── FilterButton.tsx
-│   │   │   └── SearchBar.tsx
-│   │   ├── Header.tsx          # Top bar with branding & location
-│   │   ├── LocationIndicator.tsx
-│   │   ├── ResponsiveNavigation.tsx
-│   │   ├── BottomNavigation.tsx
-│   │   ├── MapContainer.tsx    # Map abstraction & vector simulation
-│   │   ├── ParkingMapMarker.tsx # Status-coded circular percentage markers
-│   │   ├── ParkingCard.tsx     # High-tactility parking summary card
-│   │   ├── AIActionCard.tsx    # Restrained AI entry point
-│   │   ├── ParkingDetailModal.tsx
-│   │   └── AIModal.tsx
-│   ├── layouts/
-│   │   └── AppShell.tsx        # Responsive multi-breakpoint shell
-│   ├── pages/
-│   │   └── HomePage.tsx
-│   ├── hooks/
-│   │   └── useParkingDiscovery.ts # Search & filtering logic
-│   ├── data/
-│   │   └── mockParking.ts      # Isolated mock dataset
-│   ├── types/
-│   │   └── index.ts            # TypeScript interfaces
-│   ├── styles/
-│   │   └── index.css           # Global tokens & base CSS
-│   ├── App.tsx
-│   └── main.tsx
-├── .env.example
-├── CONTRIBUTING.md
-├── CODE_OF_CONDUCT.md
-├── SECURITY.md
-├── LICENSE
-└── vite.config.ts
++-- src/
+�   +-- components/
+�   �   +-- LeafletMap.tsx        # Leaflet map with OSM tiles
+�   �   +-- MapSurface.tsx        # Map shell + controls + attribution
+�   �   +-- ParkingRecommendationCard.tsx
+�   �   +-- ParkingDetailModal.tsx
+�   �   +-- ...
+�   +-- services/parking/
+�   �   +-- osmProvider.ts        # Overpass API provider
+�   �   +-- demoProvider.ts       # Deterministic fallback
+�   �   +-- parkingService.ts     # Primary -> fallback orchestrator
+�   �   +-- types.ts              # ParkingProvider interface
+�   +-- hooks/
+�   �   +-- useParkingDiscovery.ts
+�   �   +-- useUserLocation.ts
+�   +-- data/
+�   �   +-- mockParking.ts
+�   �   +-- parking.ts
+�   +-- types/index.ts
++-- vite.config.ts
 ```
 
 ---
 
-## 💻 Getting Started
+## ?? Getting Started
 
-### Prerequisites
-- Node.js (v18 or higher recommended; tested on v22)
-- npm or pnpm
-
-### Installation
 ```bash
-# Clone the repository
 git clone https://github.com/your-username/parkwise.git
 cd parkwise
-
-# Install dependencies
 npm install
-
-# Start the development server
 npm run dev
 ```
 
-Visit `http://localhost:5173` in your browser.
+Visit `http://localhost:5173`.
 
-### Production Build
 ```bash
-# Type-check and compile production bundle
+# Production build
 npm run build
-
-# Preview production build locally
 npm run preview
 ```
 
 ---
 
-## 📱 Responsive Verification
-
-The UI is built from the ground up to adapt seamlessly without requiring manual layout switching:
-- **Mobile (375px - 430px)**: Map-focused view, floating bottom navigation, horizontal swipeable cards, thumb-friendly touch targets.
-- **Tablet (768px)**: Adaptive layout with expanded map and tactile search/filter bar.
-- **Desktop (1024px - 1440px+)**: Split workspace featuring persistent parking list + AI panel on the left, and an expanded interactive map on the right.
-
----
-
-## 📄 Open Source License
+## ?? Open Source License
 
 This project is licensed under the [MIT License](LICENSE).
-Third-party libraries, map data, and fonts are subject to their respective upstream licenses as noted in the [LICENSE](LICENSE) file.
+Map data � [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), ODbL.

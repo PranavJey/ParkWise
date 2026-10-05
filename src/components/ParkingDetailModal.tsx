@@ -25,7 +25,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-4"
       style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
       role="dialog"
       aria-modal="true"
@@ -67,7 +67,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
           {/* Availability */}
           <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Live capacity</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Estimated availability</span>
               <AvailabilityBadge availability={parking.availability} status={parking.status} />
             </div>
             <div className="w-full h-2 rounded-full bg-zinc-200 overflow-hidden mb-2">
@@ -83,7 +83,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
               />
             </div>
             <div className="flex justify-between text-xs font-medium text-zinc-500">
-              <span>{parking.availableSpots} open now</span>
+              <span>{parking.availableSpots} est. available</span>
               <span>{parking.totalSpots} total</span>
             </div>
           </div>
@@ -134,7 +134,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
           <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-blue-50 border border-blue-100 text-xs text-blue-900">
             <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
             <span>
-              <strong>Live GPS Anchor</strong> — Coordinates and walking distance are relative to your current location.
+              <strong>Estimated data</strong> — Availability and capacity are estimates only. Location data sourced from OpenStreetMap contributors.
             </span>
           </div>
         </div>

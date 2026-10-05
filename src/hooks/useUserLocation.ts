@@ -8,7 +8,12 @@ import type {
 
 const HIGH_ACCURACY_TIMEOUT_MS = 10_000; // Give GPS more time on mobile
 const STANDARD_TIMEOUT_MS = 15_000;
-const CACHE_MAX_AGE_MS = 60_000; // 1 minute cache allowed for standard accuracy fallback
+const CACHE_MAX_AGE_MS = 0; // Always request a fresh network position — no stale IP cache
+
+// Positions with accuracy worse than this are IP-based guesses (not real GPS).
+// Indian telecom PoPs commonly map to Bengaluru with accuracy ~50,000m.
+// We reject these and keep loading until watchPosition delivers a real GPS fix.
+const MAX_ACCEPTABLE_ACCURACY_M = 5_000;
 
 export interface UseUserLocationReturn extends LocationState {
   /** Manually trigger a fresh location request */
@@ -38,11 +43,17 @@ export function useUserLocation(): UseUserLocationReturn {
   const mounted = useRef(true);
   const lastKnownLocationRef = useRef<UserLocation | null>(null);
   const requestIdRef = useRef(0);
+  // Safety timeout: if an IP-based position was rejected and watchPosition
+  // hasn't delivered a real GPS fix within this window, fall to timeout state.
+  const gpsWatchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      if (gpsWatchTimeoutRef.current) {
+        clearTimeout(gpsWatchTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -51,21 +62,55 @@ export function useUserLocation(): UseUserLocationReturn {
       if (!mounted.current || reqId !== requestIdRef.current) return;
 
       const { latitude, longitude, accuracy } = pos.coords;
+      const resolvedAccuracy = typeof accuracy === 'number' && !Number.isNaN(accuracy) ? accuracy : 100;
 
-      // Diagnostic logging in development
       if (import.meta.env.DEV) {
         console.log(
-          `[useUserLocation] Browser geolocation resolved${isFallback ? ' (standard fallback)' : ''}: latitude=${latitude}, longitude=${longitude}, accuracy=${accuracy}m`
+          `[useUserLocation] Geolocation resolved${isFallback ? ' (standard fallback)' : ''}: (${latitude}, ${longitude}), accuracy=${resolvedAccuracy}m`
         );
       }
 
-      // Requirement 3 & 6: Accept all valid coordinates; do not treat reduced accuracy as failure
+      // Reject IP-based positions from the network fallback.
+      // When enableHighAccuracy=false, browsers may return an IP-geolocation fix
+      // with accuracy > 5,000m (sometimes 50,000m). In India, telecom PoPs are
+      // concentrated in Bengaluru, so these positions are almost always wrong.
+      // We keep loading=true so watchPosition can deliver the real GPS fix instead.
+      if (isFallback && resolvedAccuracy > MAX_ACCEPTABLE_ACCURACY_M) {
+        if (import.meta.env.DEV) {
+          console.warn(
+            `[useUserLocation] Rejecting IP-based fallback position (accuracy=${resolvedAccuracy}m > ${MAX_ACCEPTABLE_ACCURACY_M}m threshold). Keeping loading=true for watchPosition.`
+          );
+        }
+        // Start a safety timeout: if watchPosition doesn't give us a real fix
+        // within 20s, fall gracefully to timeout/demo mode.
+        if (!gpsWatchTimeoutRef.current) {
+          gpsWatchTimeoutRef.current = setTimeout(() => {
+            if (!mounted.current) return;
+            if (import.meta.env.DEV) {
+              console.warn('[useUserLocation] GPS watch timeout: no real fix received. Falling to demo mode.');
+            }
+            setState((prev) => {
+              if (prev.status === 'granted') return prev; // already resolved
+              return {
+                status: 'timeout',
+                location: lastKnownLocationRef.current,
+                loading: false,
+                error: 'timeout',
+                permissionState: 'prompt',
+              };
+            });
+          }, 20_000);
+        }
+        // Do NOT update state — leave loading:true so watchPosition can resolve it
+        return;
+      }
+
       const userLoc: UserLocation = {
         latitude,
         longitude,
-        accuracy: typeof accuracy === 'number' && !Number.isNaN(accuracy) ? accuracy : 100,
+        accuracy: resolvedAccuracy,
         timestamp: pos.timestamp || Date.now(),
-        isApproximate: accuracy > 250,
+        isApproximate: resolvedAccuracy > 250,
       };
 
       lastKnownLocationRef.current = userLoc;
@@ -213,12 +258,31 @@ export function useUserLocation(): UseUserLocationReturn {
           );
         }
 
+        const resolvedAccuracy = typeof accuracy === 'number' && !Number.isNaN(accuracy) ? accuracy : 100;
+
+        // Reject IP-based positions from watchPosition too.
+        // Only accept positions accurate to within MAX_ACCEPTABLE_ACCURACY_M.
+        if (resolvedAccuracy > MAX_ACCEPTABLE_ACCURACY_M) {
+          if (import.meta.env.DEV) {
+            console.warn(
+              `[useUserLocation] watchPosition: Ignoring coarse position (accuracy=${resolvedAccuracy}m > ${MAX_ACCEPTABLE_ACCURACY_M}m). Likely IP-based.`
+            );
+          }
+          return;
+        }
+
+        // Cancel the safety timeout — watchPosition delivered a real GPS fix
+        if (gpsWatchTimeoutRef.current) {
+          clearTimeout(gpsWatchTimeoutRef.current);
+          gpsWatchTimeoutRef.current = null;
+        }
+
         const userLoc: UserLocation = {
           latitude,
           longitude,
-          accuracy: typeof accuracy === 'number' && !Number.isNaN(accuracy) ? accuracy : 100,
+          accuracy: resolvedAccuracy,
           timestamp: pos.timestamp || Date.now(),
-          isApproximate: accuracy > 250,
+          isApproximate: resolvedAccuracy > 250,
         };
 
         lastKnownLocationRef.current = userLoc;

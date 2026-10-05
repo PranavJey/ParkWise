@@ -53,6 +53,11 @@ export const AppShell: React.FC = () => {
     }
   };
 
+  const handleNavigate = (parking: ParkingSpot) => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${parking.latitude},${parking.longitude}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   // handlePrompt removed — Phase 5 AI modal handles its own preference extraction.
 
   const handleTabChange = (tab: NavigationTab) => {
@@ -200,7 +205,7 @@ export const AppShell: React.FC = () => {
                     selected={selected?.id === p.id}
                     onSelect={() => handleSelect(p)}
                     onViewDetails={() => setDetailParking(p)}
-                    onNavigate={() => setDetailParking(p)}
+                    onNavigate={() => handleNavigate(p)}
                   />
                 ))
               )}
@@ -219,7 +224,7 @@ export const AppShell: React.FC = () => {
                       selected={selected?.id === p.id}
                       onSelect={() => handleSelect(p)}
                       onViewDetails={() => setDetailParking(p)}
-                      onNavigate={() => setDetailParking(p)}
+                      onNavigate={() => handleNavigate(p)}
                     />
                   </div>
                 ))}
@@ -236,7 +241,7 @@ export const AppShell: React.FC = () => {
                     selected={selected?.id === p.id}
                     onSelect={() => handleSelect(p)}
                     onViewDetails={() => setDetailParking(p)}
-                    onNavigate={() => setDetailParking(p)}
+                    onNavigate={() => handleNavigate(p)}
                   />
                 ))}
               </div>
@@ -289,13 +294,16 @@ export const AppShell: React.FC = () => {
       <ParkingDetailModal
         parking={detailParking}
         onClose={() => setDetailParking(null)}
-        onNavigate={() => setDetailParking(null)}
+        onNavigate={() => {
+          if (detailParking) handleNavigate(detailParking);
+        }}
       />
       <AIModal
         isOpen={aiOpen}
         onClose={() => setAIOpen(false)}
         parkingSpots={filtered}
         onSelectParking={handleSelect}
+        onNavigate={handleNavigate}
       />
     </div>
   );

@@ -1,5 +1,10 @@
 import type { ParkingSpot, FilterOption } from '@/types';
 
+export const DEFAULT_DEMO_COORDINATES = {
+  latitude: 12.9716,
+  longitude: 77.5946,
+} as const;
+
 export const FILTER_OPTIONS: { id: FilterOption; label: string }[] = [
   { id: 'all', label: 'All spots' },
   { id: 'high_availability', label: 'High availability (>70%)' },

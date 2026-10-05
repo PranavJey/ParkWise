@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles, X, ArrowRight, Loader2, MapPin,
-  CheckCircle2, AlertTriangle, Zap, Umbrella, RotateCcw,
+  CheckCircle2, AlertTriangle, Zap, Umbrella, RotateCcw, Navigation,
 } from 'lucide-react';
 import { AI_QUICK_PROMPTS } from '@/data/mockParking';
 import type { ParkingSpot } from '@/types';
@@ -16,6 +16,8 @@ interface AIModalProps {
   parkingSpots: ParkingSpot[];
   /** Called when user confirms the AI-recommended spot — syncs map + card list */
   onSelectParking: (parking: ParkingSpot) => void;
+  /** Opens external turn-by-turn map directions for the parking location */
+  onNavigate?: (parking: ParkingSpot) => void;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -29,6 +31,7 @@ export const AIModal: React.FC<AIModalProps> = ({
   onClose,
   parkingSpots,
   onSelectParking,
+  onNavigate,
 }) => {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -76,6 +79,14 @@ export const AIModal: React.FC<AIModalProps> = ({
 
   const handleSelectParking = () => {
     if (bestParking) { onSelectParking(bestParking); handleClose(); }
+  };
+
+  const handleDirectNavigate = () => {
+    if (bestParking) {
+      onSelectParking(bestParking);
+      onNavigate?.(bestParking);
+      handleClose();
+    }
   };
 
   if (!isOpen) return null;
@@ -366,10 +377,18 @@ export const AIModal: React.FC<AIModalProps> = ({
             <button
               type="button"
               onClick={handleSelectParking}
-              className="flex-1 h-12 rounded-2xl bg-white text-zinc-950 text-sm font-bold flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors cursor-pointer"
+              className="flex-1 h-12 rounded-2xl border border-zinc-700 bg-zinc-900 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-zinc-800 transition-colors cursor-pointer"
             >
-              <MapPin className="w-4 h-4" />
-              Select &amp; view on map
+              <MapPin className="w-4 h-4 text-emerald-400" />
+              <span>Select on map</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleDirectNavigate}
+              className="flex-1 h-12 rounded-2xl bg-white text-zinc-950 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 hover:bg-zinc-100 transition-colors cursor-pointer"
+            >
+              <Navigation className="w-4 h-4" />
+              <span>Navigate</span>
             </button>
           </div>
         )}

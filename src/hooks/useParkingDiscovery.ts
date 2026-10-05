@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { ParkingSpot, UserLocation } from '@/types';
-import { parkingService } from '@/services/parking';
-import { DEFAULT_DEMO_COORDINATES } from '@/data/parking';
+import { parkingService, DEFAULT_DEMO_COORDINATES } from '@/services/parking';
 import { haversineDistance } from '@/lib/geo';
 
 export interface UseParkingDiscoveryOptions {

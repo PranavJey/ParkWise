@@ -1,13 +1,51 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
+import aiHandler from './api/ai.ts';
 
-export default defineConfig({
-  plugins: [
-    tailwindcss(),
-    react(),
+function parkwiseAiApiPlugin(): Plugin {
+  return {
+    name: 'parkwise-ai-api-middleware',
+    configureServer(server) {
+      server.middlewares.use('/api/ai', (req, res) => {
+        aiHandler(req, res).catch((err) => {
+          console.error('[ParkWise AI Middleware Error]:', err);
+          if (!res.headersSent) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Internal server proxy error' }));
+          }
+        });
+      });
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use('/api/ai', (req, res) => {
+        aiHandler(req, res).catch((err) => {
+          console.error('[ParkWise AI Preview Middleware Error]:', err);
+          if (!res.headersSent) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Internal server proxy error' }));
+          }
+        });
+      });
+    },
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  if (env.GROQ_API_KEY && !process.env.GROQ_API_KEY) {
+    process.env.GROQ_API_KEY = env.GROQ_API_KEY;
+  }
+
+  return {
+    plugins: [
+      tailwindcss(),
+      react(),
+      parkwiseAiApiPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icons/*.png'],
@@ -48,4 +86,5 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+};
 });

@@ -1,0 +1,48 @@
+import React from 'react';
+import { cn } from '@/lib/utils';
+
+export interface PrimaryButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  iconPosition?: 'left' | 'right';
+  size?: 'sm' | 'md' | 'lg';
+  fullWidth?: boolean;
+}
+
+export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
+  children,
+  icon,
+  iconPosition = 'right',
+  size = 'md',
+  fullWidth = false,
+  className,
+  disabled,
+  ...props
+}) => {
+  const sizeStyles = {
+    sm: 'h-10 px-4 text-xs font-semibold rounded-full gap-1.5',
+    md: 'h-12 px-5 text-sm font-semibold rounded-2xl gap-2',
+    lg: 'h-14 px-6 text-base font-semibold rounded-2xl gap-2.5',
+  };
+
+  return (
+    <button
+      className={cn(
+        'inline-flex items-center justify-center font-medium tracking-tight',
+        'bg-zinc-900 text-white hover:bg-zinc-800 active:bg-zinc-950',
+        'shadow-sm hover:shadow transition-all duration-200',
+        'active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2',
+        sizeStyles[size],
+        fullWidth && 'w-full',
+        className
+      )}
+      disabled={disabled}
+      {...props}
+    >
+      {icon && iconPosition === 'left' && <span className="inline-flex shrink-0">{icon}</span>}
+      <span>{children}</span>
+      {icon && iconPosition === 'right' && <span className="inline-flex shrink-0">{icon}</span>}
+    </button>
+  );
+};

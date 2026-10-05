@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181B" />
+      <stop offset="100%" stop-color="#09090B" />
+    </linearGradient>
+    <linearGradient id="dot-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Outer rounded squircle with generous radius -->
+  <rect x="24" y="24" width="464" height="464" rx="128" fill="url(#bg-grad)" stroke="#27272A" stroke-width="8" />
+  
+  <!-- Sleek Parking 'P' Symbol -->
+  <path d="M 176 136 L 276 136 C 330 136 368 170 368 224 C 368 278 330 312 276 312 L 232 312 L 232 376 C 232 387 223 396 212 396 L 196 396 C 185 396 176 387 176 376 Z M 232 192 L 232 256 L 274 256 C 298 256 314 242 314 224 C 314 206 298 192 274 192 Z" fill="#FFFFFF" />
+  
+  <!-- AI / Smart Availability Indicator Beacon -->
+  <circle cx="360" cy="148" r="28" fill="url(#dot-grad)" filter="url(#soft-glow)" />
+  <circle cx="360" cy="148" r="14" fill="#FFFFFF" opacity="0.9" />
+</svg>

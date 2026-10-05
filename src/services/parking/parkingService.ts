@@ -80,6 +80,15 @@ export class ParkingService {
 
     const radiusMeters = options?.radiusMeters ?? this.defaultRadiusMeters;
 
+    if (import.meta.env.DEV) {
+      console.log(
+        `[ParkingService] getNearbyParking called with coordinates: (${latitude}, ${longitude}), radius: ${radiusMeters}m`
+      );
+      console.log(
+        `[ParkingService] Dispatching to primary provider '${this.primaryProvider.name}' with coords: (${latitude}, ${longitude})`
+      );
+    }
+
     // Step 1: Attempt Primary Provider (OpenStreetMap)
     try {
       const spots = await this.primaryProvider.getNearbyParking(latitude, longitude, {

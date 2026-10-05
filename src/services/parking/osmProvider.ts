@@ -51,6 +51,12 @@ export class OpenStreetMapParkingProvider implements ParkingProvider {
     // Overpass QL query: queries nodes and ways with amenity=parking within radius
     const query = `[out:json][timeout:8];(node[amenity=parking](around:${radius},${latitude},${longitude});way[amenity=parking](around:${radius},${latitude},${longitude}););out center ${limit};`;
 
+    if (import.meta.env.DEV) {
+      console.log(
+        `[OpenStreetMapParkingProvider] Overpass query center: (${latitude}, ${longitude}), radius: ${radius}m`
+      );
+    }
+
     let lastError: unknown = null;
 
     // Try endpoints with fallback
@@ -82,11 +88,28 @@ export class OpenStreetMapParkingProvider implements ParkingProvider {
 
         const data: OverpassResponse = await response.json();
         if (!data || !Array.isArray(data.elements) || data.elements.length === 0) {
+          if (import.meta.env.DEV) {
+            console.log(
+              `[OpenStreetMapParkingProvider] Overpass returned 0 elements for center: (${latitude}, ${longitude})`
+            );
+          }
           // Empty or invalid result
           return [];
         }
 
-        return this.normalizeElements(data.elements, latitude, longitude);
+        const spots = this.normalizeElements(data.elements, latitude, longitude);
+        if (import.meta.env.DEV) {
+          console.log(
+            `[OpenStreetMapParkingProvider] Received ${data.elements.length} raw OSM elements, normalized to ${spots.length} spots for center (${latitude}, ${longitude}).`
+          );
+          if (spots.length > 0) {
+            console.log(
+              `[OpenStreetMapParkingProvider] First returned spot: "${spots[0].name}" at (${spots[0].latitude}, ${spots[0].longitude}), distance: ${spots[0].distanceMeters}m`
+            );
+          }
+        }
+
+        return spots;
       } catch (err) {
         clearTimeout(timeoutId);
         lastError = err;

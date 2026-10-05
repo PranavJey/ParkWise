@@ -43,6 +43,7 @@ export const AppShell: React.FC = () => {
     resetFilters,
   } = useParkingDiscovery({
     userLocation: location,
+    locationLoading,
   });
 
   const handleSelect = (p: ParkingSpot) => {

@@ -6,9 +6,9 @@ import type {
   LocationStatus,
 } from '@/types';
 
-const HIGH_ACCURACY_TIMEOUT_MS = 6_000;
-const STANDARD_TIMEOUT_MS = 12_000;
-const CACHE_MAX_AGE_MS = 300_000; // 5 minutes cache allowed for standard accuracy
+const HIGH_ACCURACY_TIMEOUT_MS = 10_000; // Give GPS more time on mobile
+const STANDARD_TIMEOUT_MS = 15_000;
+const CACHE_MAX_AGE_MS = 60_000; // 1 minute cache allowed for standard accuracy fallback
 
 export interface UseUserLocationReturn extends LocationState {
   /** Manually trigger a fresh location request */
@@ -52,15 +52,10 @@ export function useUserLocation(): UseUserLocationReturn {
 
       const { latitude, longitude, accuracy } = pos.coords;
 
-      // Diagnostic logging in development (Requirement 2)
+      // Diagnostic logging in development
       if (import.meta.env.DEV) {
         console.log(
-          `[ParkWise Geolocation Success${isFallback ? ' (standard fallback)' : ''}]`,
-          {
-            latitude,
-            longitude,
-            accuracy,
-          }
+          `[useUserLocation] Browser geolocation resolved${isFallback ? ' (standard fallback)' : ''}: latitude=${latitude}, longitude=${longitude}, accuracy=${accuracy}m`
         );
       }
 
@@ -191,7 +186,7 @@ export function useUserLocation(): UseUserLocationReturn {
       {
         enableHighAccuracy: true,
         timeout: HIGH_ACCURACY_TIMEOUT_MS,
-        maximumAge: 10_000,
+        maximumAge: 0, // Always request a fresh position — no stale cache
       }
     );
   }, [handleSuccess]);
@@ -200,6 +195,63 @@ export function useUserLocation(): UseUserLocationReturn {
   useEffect(() => {
     requestLocation();
   }, [requestLocation]);
+
+  // Continuously watch for better GPS fixes after initial position is resolved.
+  // This is critical on mobile: the first fix may be a rough network/IP position;
+  // watchPosition fires again when GPS refines accuracy significantly.
+  useEffect(() => {
+    if (!('geolocation' in navigator)) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (!mounted.current) return;
+        const { latitude, longitude, accuracy } = pos.coords;
+
+        if (import.meta.env.DEV) {
+          console.log(
+            `[useUserLocation] watchPosition update: (${latitude}, ${longitude}), accuracy=${accuracy}m`
+          );
+        }
+
+        const userLoc: UserLocation = {
+          latitude,
+          longitude,
+          accuracy: typeof accuracy === 'number' && !Number.isNaN(accuracy) ? accuracy : 100,
+          timestamp: pos.timestamp || Date.now(),
+          isApproximate: accuracy > 250,
+        };
+
+        lastKnownLocationRef.current = userLoc;
+
+        setState((prev) => {
+          // Only update if we already have a granted state — don't override loading/denied
+          if (prev.status !== 'granted' && prev.status !== 'loading') return prev;
+          return {
+            status: 'granted',
+            location: userLoc,
+            loading: false,
+            error: null,
+            permissionState: 'granted',
+          };
+        });
+      },
+      (err) => {
+        // watchPosition errors are non-fatal; initial request handles permission denial
+        if (import.meta.env.DEV) {
+          console.warn('[useUserLocation] watchPosition error (non-fatal):', err.message);
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 30_000,
+        maximumAge: 0,
+      }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, []);
 
   // Listen to browser permission state changes where supported
   useEffect(() => {

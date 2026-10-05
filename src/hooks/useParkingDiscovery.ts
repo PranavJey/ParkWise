@@ -5,6 +5,7 @@ import { haversineDistance } from '@/lib/geo';
 
 export interface UseParkingDiscoveryOptions {
   userLocation: UserLocation | null;
+  locationLoading?: boolean;
   radiusMeters?: number;
 }
 
@@ -44,7 +45,7 @@ const SIGNIFICANT_LOCATION_DELTA_METERS = 20;
 export function useParkingDiscovery(
   options: UseParkingDiscoveryOptions
 ): UseParkingDiscoveryReturn {
-  const { userLocation, radiusMeters = 5000 } = options;
+  const { userLocation, locationLoading = false, radiusMeters = 5000 } = options;
 
   const [parkingSpots, setParkingSpots] = useState<ParkingSpot[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -54,9 +55,10 @@ export function useParkingDiscovery(
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [selectedParkingId, setSelectedParkingId] = useState<string>('pk-1');
 
-  // Track coordinates of the last successful fetch to avoid thrashing
-  const lastFetchedCoordsRef = useRef<{ lat: number; lon: number } | null>(null);
-  const isFetchingRef = useRef(false);
+  // Track coordinates and authenticity of the last successful fetch
+  const lastFetchedCoordsRef = useRef<{ lat: number; lon: number; isReal: boolean } | null>(null);
+  const activeReqIdRef = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Determine current active anchor coordinates
   const currentAnchor = useMemo(() => {
@@ -76,10 +78,18 @@ export function useParkingDiscovery(
 
   const fetchParking = useCallback(
     async (force = false) => {
-      const { lat, lon } = currentAnchor;
+      // Do not fetch default demo coordinates while browser geolocation is still resolving!
+      if (!currentAnchor.isReal && locationLoading) {
+        setLoading(true);
+        return;
+      }
 
-      // Skip redundant fetch if position hasn't moved significantly
-      if (!force && lastFetchedCoordsRef.current) {
+      const { lat, lon, isReal } = currentAnchor;
+
+      // Skip redundant fetch only if position hasn't moved significantly
+      // AND we haven't transitioned between demo coordinates and real coordinates.
+      const wasPreviousReal = lastFetchedCoordsRef.current?.isReal ?? false;
+      if (!force && lastFetchedCoordsRef.current && wasPreviousReal === isReal) {
         const deltaM = haversineDistance(
           lastFetchedCoordsRef.current.lat,
           lastFetchedCoordsRef.current.lon,
@@ -91,17 +101,42 @@ export function useParkingDiscovery(
         }
       }
 
-      if (isFetchingRef.current) return;
-      isFetchingRef.current = true;
+      // Abort any ongoing stale fetch
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      const reqId = ++activeReqIdRef.current;
       setLoading(true);
       setError(null);
+
+      if (import.meta.env.DEV) {
+        console.log(
+          `[useParkingDiscovery] Fetching parking for ${isReal ? 'REAL' : 'DEMO'} coordinates: (${lat}, ${lon}) [req #${reqId}]`
+        );
+      }
 
       try {
         const spots = await parkingService.getNearbyParking(lat, lon, {
           radiusMeters,
+          signal: controller.signal,
         });
+
+        // Discard result if superseded by a newer request or aborted
+        if (reqId !== activeReqIdRef.current || controller.signal.aborted) {
+          return;
+        }
+
         setParkingSpots(spots);
-        lastFetchedCoordsRef.current = { lat, lon };
+        lastFetchedCoordsRef.current = { lat, lon, isReal };
+
+        if (import.meta.env.DEV) {
+          console.log(
+            `[useParkingDiscovery] Received ${spots.length} spots for (${lat}, ${lon}). First spot: "${spots[0]?.name}" at (${spots[0]?.latitude}, ${spots[0]?.longitude})`
+          );
+        }
 
         // Ensure a selected spot is preserved or reset to first
         setSelectedParkingId((currentId) => {
@@ -110,15 +145,23 @@ export function useParkingDiscovery(
           }
           return spots[0]?.id ?? '';
         });
-      } catch (err) {
+      } catch (err: unknown) {
+        if (controller.signal.aborted || (err instanceof Error && err.name === 'AbortError')) {
+          return;
+        }
+        if (reqId !== activeReqIdRef.current) {
+          return;
+        }
+
         const msg = err instanceof Error ? err.message : 'Failed to fetch parking locations';
         setError(msg);
       } finally {
-        setLoading(false);
-        isFetchingRef.current = false;
+        if (reqId === activeReqIdRef.current) {
+          setLoading(false);
+        }
       }
     },
-    [currentAnchor, radiusMeters]
+    [currentAnchor, locationLoading, radiusMeters]
   );
 
   // Fetch when anchor coordinates change meaningfully
